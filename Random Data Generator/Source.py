@@ -2,9 +2,62 @@ import os
 import Randomizer
 import FileHandle
 import Timer
+import re
+import math
 from prettytable import PrettyTable
 
-def RandDataGenerator( size, debug ) :
+def clearscreen(): os.system("cls")
+def pause(): os.system("pause")
+
+def ShowData( filename, header, limit, delimiter='' ):
+
+	def ShowInfo( limit, TotalData, PageIndex ):
+		clearscreen()
+		print( "Data Showed in Page: ", limit )
+		print( "Data Loaded: ", TotalData )
+		print( "Page %d out of %d" % ( PageIndex,TotalPage ) )
+		
+	TableData = PrettyTable( header )
+	CatchData = FileHandle.read( filename )
+	TotalData = len( CatchData )
+
+	#Error Checking, If Header doesn't match the Data
+	DataColumn = CatchData[0].split( delimiter )
+	if not ( len(DataColumn) == len(header) ): return False
+	
+	if ( limit > TotalData ): limit = TotalData
+	TotalPage = int( math.ceil(TotalData/limit) )
+	PageIndex = 1
+	DiscoverPage = True
+
+	while( DiscoverPage ):
+		ShowInfo( limit, TotalData, PageIndex )
+		
+		#Print Data Based on Limit and Starting Index (Page)
+		StartingIndex = (PageIndex-1) * limit
+		for i in range( StartingIndex, StartingIndex+limit ):
+			DataColumn = CatchData[i].split( delimiter )
+			TableData.add_row( DataColumn )
+		print( TableData )
+		TableData.clear_rows()
+		
+		if ( TotalPage > 1 ):
+			while( True ):
+				SelectPage = input("'0':Exit, Input Page to View:")
+				if ( SelectPage == '' or SelectPage < '0' or SelectPage > '9' ): SelectPage = -1
+				else: SelectPage = int(SelectPage)
+
+				if ( SelectPage <= TotalPage and SelectPage > 0 ): 
+					PageIndex = SelectPage
+					break
+				elif ( SelectPage == 0 ): 
+					DiscoverPage = False
+					break
+				else: print( "Err:Invalid Range" )
+
+	return True
+
+def RandDataGenerator( filename, format, size, debug ) :
 	
 	def RandomDOB():
 		temp1 = Randomizer.RandName( "Random/province.txt" )
@@ -39,10 +92,13 @@ def RandDataGenerator( size, debug ) :
 		Year = Randomizer.RandNum( 2014, 2019, 1 )
 		NPM = Randomizer.RandNum( 0,9,10 )
 		string = "%s,%d,%s,%d,%s" % ( Name,NPM,DOB,Year,Grade )
-		FileHandle.append( string, "DataMahasiswa", "csv" )
+		FileHandle.append( string, filename, format )
 	if ( debug ):
 		perfcounter.stop()
 		perfcounter.print()
 
-size = input( "Size to Generate:" )
-RandDataGenerator( int(size), debug=True )
+#size = input( "Size to Generate:" )
+#RandDataGenerator( "DataMahasiswa", "csv", int(size), debug=True )
+
+header = [ "Nama", "NPM", "TTL", "Angkatan", "IPK" ]
+ShowData( "DataMahasiswa.csv", header, 10, ',' )
